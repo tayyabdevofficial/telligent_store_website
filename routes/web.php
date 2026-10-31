@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
-use App\Http\Controllers\Admin\PaymentLinkController as AdminPaymentLinkController;
 use App\Http\Controllers\Admin\PackageController as AdminPackageController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Admin\PaymentLinkController as AdminPaymentLinkController;
 use App\Http\Controllers\Admin\PlatformController as AdminPlatformController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\CheckoutController;
@@ -12,6 +12,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentLinkController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\XsollaWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -29,6 +30,7 @@ Route::post('/pay', [PaymentLinkController::class, 'storeCustom'])->name('paymen
 Route::get('/pay/{paymentLink:slug}', [PaymentLinkController::class, 'show'])->name('payments.link.show');
 Route::post('/pay/{paymentLink:slug}', [PaymentLinkController::class, 'store'])->name('payments.link.store');
 Route::post('/webhooks/stripe', StripeWebhookController::class)->name('webhooks.stripe');
+Route::post('/webhooks/xsolla', XsollaWebhookController::class)->name('webhooks.xsolla');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');

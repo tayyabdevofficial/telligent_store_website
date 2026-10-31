@@ -17,6 +17,7 @@ class CustomAmountPaymentRequest extends FormRequest
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email:rfc,dns', 'max:255'],
             'amount' => ['required', 'numeric', 'min:5', 'max:999999.99'],
+            'payment_method' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

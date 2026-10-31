@@ -16,8 +16,8 @@
                 <div><p class="text-slate-500">Amount</p><p class="mt-1 font-semibold text-slate-900">${{ number_format($payment->amount, 2) }}</p></div>
                 <div><p class="text-slate-500">Order</p><p class="mt-1 font-semibold text-slate-900">#{{ $payment->order_id }}</p></div>
                 <div><p class="text-slate-500">Title</p><p class="mt-1 font-semibold text-slate-900">{{ $payment->order?->custom_title ?: ($payment->order?->package?->name ?: 'Standard payment') }}</p></div>
-                <div class="md:col-span-2"><p class="text-slate-500">Stripe session id</p><p class="mt-1 break-all font-semibold text-slate-900">{{ $payment->provider_session_id ?: 'N/A' }}</p></div>
-                <div class="md:col-span-2"><p class="text-slate-500">Stripe payment intent</p><p class="mt-1 break-all font-semibold text-slate-900">{{ $payment->provider_payment_id ?: 'N/A' }}</p></div>
+                <div class="md:col-span-2"><p class="text-slate-500">{{ ucfirst($payment->provider ?: 'Gateway') }} session / token</p><p class="mt-1 break-all font-semibold text-slate-900">{{ $payment->provider_session_id ?: 'N/A' }}</p></div>
+                <div class="md:col-span-2"><p class="text-slate-500">{{ ucfirst($payment->provider ?: 'Gateway') }} payment / transaction ID</p><p class="mt-1 break-all font-semibold text-slate-900">{{ $payment->provider_payment_id ?: 'N/A' }}</p></div>
             </div>
         </div>
     </div>

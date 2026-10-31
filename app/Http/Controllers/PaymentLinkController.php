@@ -8,7 +8,7 @@ use App\Http\Requests\CustomAmountPaymentRequest;
 use App\Http\Requests\PaymentLinkCheckoutRequest;
 use App\Models\Order;
 use App\Models\PaymentLink;
-use App\Services\StripeCheckoutService;
+use App\Services\PaymentManager;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,20 +16,22 @@ use Illuminate\Support\Str;
 
 class PaymentLinkController extends Controller
 {
-    public function custom(): View
+    public function custom(PaymentManager $paymentManager): View
     {
         $paymentLink = null;
+        $enabledGateways = $paymentManager->getEnabledGateways();
 
-        return view('payments.link', compact('paymentLink'));
+        return view('payments.link', compact('paymentLink', 'enabledGateways'));
     }
 
     public function storeCustom(
         CustomAmountPaymentRequest $request,
-        StripeCheckoutService $stripeCheckoutService,
+        PaymentManager $paymentManager,
     ): RedirectResponse {
         $validated = $request->validated();
+        $gateway = $paymentManager->getGateway($validated['payment_method'] ?? null);
 
-        [$order, $payment] = DB::transaction(function () use ($validated) {
+        [$order, $payment] = DB::transaction(function () use ($validated, $gateway) {
             $amount = (float) $validated['amount'];
             $title = 'Custom amount payment';
             $description = 'Custom billed digital service request. Submit payment only after support has confirmed the exact deliverables, target links, and timeline for this order.';
@@ -65,7 +67,7 @@ class PaymentLinkController extends Controller
 
             $payment = $order->payments()->create([
                 'user_id' => null,
-                'provider' => 'stripe',
+                'provider' => $gateway->id(),
                 'amount' => $amount,
                 'currency' => 'usd',
                 'status' => PaymentStatus::Pending,
@@ -75,7 +77,7 @@ class PaymentLinkController extends Controller
             return [$order, $payment];
         });
 
-        $session = $stripeCheckoutService->createCheckoutSession(
+        $sessionResult = $gateway->createCheckoutSession(
             $order,
             $payment,
             $order->custom_title,
@@ -83,35 +85,38 @@ class PaymentLinkController extends Controller
         );
 
         $payment->forceFill([
-            'provider_session_id' => $session->id,
-            'provider_payment_id' => $session->payment_intent,
-            'payload' => $session->toArray(),
+            'provider_session_id' => $sessionResult->sessionId,
+            'provider_payment_id' => $sessionResult->paymentId,
+            'payload' => $sessionResult->rawPayload,
         ])->save();
 
         $order->forceFill([
             'status' => OrderStatus::AwaitingPayment,
         ])->save();
 
-        return redirect()->away($session->url);
+        return redirect()->away($sessionResult->redirectUrl);
     }
 
-    public function show(PaymentLink $paymentLink): View
+    public function show(PaymentLink $paymentLink, PaymentManager $paymentManager): View
     {
         abort_unless($paymentLink->is_active, 404);
 
-        return view('payments.link', compact('paymentLink'));
+        $enabledGateways = $paymentManager->getEnabledGateways();
+
+        return view('payments.link', compact('paymentLink', 'enabledGateways'));
     }
 
     public function store(
         PaymentLinkCheckoutRequest $request,
         PaymentLink $paymentLink,
-        StripeCheckoutService $stripeCheckoutService,
+        PaymentManager $paymentManager,
     ): RedirectResponse {
         abort_unless($paymentLink->is_active, 404);
 
         $validated = $request->validated();
+        $gateway = $paymentManager->getGateway($validated['payment_method'] ?? null);
 
-        [$order, $payment] = DB::transaction(function () use ($validated, $paymentLink) {
+        [$order, $payment] = DB::transaction(function () use ($validated, $paymentLink, $gateway) {
             $order = Order::create([
                 'user_id' => null,
                 'social_platform_id' => null,
@@ -143,7 +148,7 @@ class PaymentLinkController extends Controller
 
             $payment = $order->payments()->create([
                 'user_id' => null,
-                'provider' => 'stripe',
+                'provider' => $gateway->id(),
                 'amount' => $paymentLink->amount,
                 'currency' => $paymentLink->currency,
                 'status' => PaymentStatus::Pending,
@@ -153,7 +158,7 @@ class PaymentLinkController extends Controller
             return [$order, $payment];
         });
 
-        $session = $stripeCheckoutService->createCheckoutSession(
+        $sessionResult = $gateway->createCheckoutSession(
             $order,
             $payment,
             $paymentLink->title,
@@ -161,15 +166,15 @@ class PaymentLinkController extends Controller
         );
 
         $payment->forceFill([
-            'provider_session_id' => $session->id,
-            'provider_payment_id' => $session->payment_intent,
-            'payload' => $session->toArray(),
+            'provider_session_id' => $sessionResult->sessionId,
+            'provider_payment_id' => $sessionResult->paymentId,
+            'payload' => $sessionResult->rawPayload,
         ])->save();
 
         $order->forceFill([
             'status' => OrderStatus::AwaitingPayment,
         ])->save();
 
-        return redirect()->away($session->url);
+        return redirect()->away($sessionResult->redirectUrl);
     }
 }

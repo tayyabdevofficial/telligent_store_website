@@ -5,7 +5,21 @@
                 @csrf
                 <p class="text-sm font-semibold uppercase tracking-[0.24em] text-sky-600">Secure checkout</p>
                 <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-slate-950">Complete your order</h1>
-                <p class="mt-3 text-sm leading-6 text-slate-600">This form works for guest buyers and logged-in customers. Payment is processed through Stripe for {{ config('business.storefront_name') }}, operating under {{ config('business.legal_name') }}.</p>
+                
+                @php
+                    $gateways = $enabledGateways ?? collect();
+                @endphp
+
+                @if ($gateways->isEmpty())
+                    <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                        <span class="font-semibold">Notice:</span> Online payment methods are currently disabled for maintenance. Please reach out to support for assistance.
+                    </div>
+                @else
+                    <p class="mt-3 text-sm leading-6 text-slate-600">
+                        This form works for guest buyers and logged-in customers. Payment is processed securely for {{ config('business.storefront_name') }}, operating under {{ config('business.legal_name') }}.
+                    </p>
+                @endif
+
                 <div class="mt-6 rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4">
                     <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Package</p>
                     <p class="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">{{ $package->name }}</p>
@@ -36,7 +50,29 @@
                     </label>
                 </div>
 
-                <button type="submit" class="mt-8 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-600">
+                @if ($gateways->count() > 1)
+                    <div class="mt-6">
+                        <span class="mb-3 block text-sm font-semibold text-slate-700">Select payment method</span>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            @foreach ($gateways as $gateway)
+                                <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-500 has-[:checked]:border-sky-600 has-[:checked]:bg-sky-50/50">
+                                    <input type="radio" name="payment_method" value="{{ $gateway->id() }}" @checked(old('payment_method', $loop->first ? $gateway->id() : null) === $gateway->id()) class="text-sky-600 focus:ring-sky-500">
+                                    <div>
+                                        <p class="font-semibold text-slate-900 text-sm">{{ $gateway->name() }}</p>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                @elseif ($gateways->count() === 1)
+                    <input type="hidden" name="payment_method" value="{{ $gateways->first()->id() }}">
+                    <div class="mt-6 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                        <span class="font-semibold text-slate-900">Payment provider:</span>
+                        <span>{{ $gateways->first()->name() }}</span>
+                    </div>
+                @endif
+
+                <button type="submit" @disabled($gateways->isEmpty()) class="mt-8 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed">
                     Pay Now - ${{ number_format($package->price, 2) }}
                 </button>
                 <p class="mt-4 text-center text-sm leading-6 text-slate-500">

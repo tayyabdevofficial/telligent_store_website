@@ -16,6 +16,7 @@ class PaymentLinkCheckoutRequest extends FormRequest
         return [
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email:rfc,dns', 'max:255'],
+            'payment_method' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

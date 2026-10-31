@@ -18,8 +18,12 @@ return new class extends Migration
             $table->text('description')->nullable()->after('title');
         });
 
+        $concatExpr = DB::getDriverName() === 'sqlite'
+            ? "name || ' includes ' || LOWER(service_type) || ' delivery for the selected platform. Review the package details on the storefront before checkout.'"
+            : "CONCAT(name, ' includes ', LOWER(service_type), ' delivery for the selected platform. Review the package details on the storefront before checkout.')";
+
         DB::table('service_packages')->whereNull('description')->update([
-            'description' => DB::raw("CONCAT(name, ' includes ', LOWER(service_type), ' delivery for the selected platform. Review the package details on the storefront before checkout.')"),
+            'description' => DB::raw($concatExpr),
         ]);
 
         DB::table('service_packages')->whereNull('delivery_timeline')->update([

@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 /auth.json
+.github/
 
 # --- Server Deployment & Webhook Scripts ---
 /deploy.sh

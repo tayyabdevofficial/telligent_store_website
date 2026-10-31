@@ -3,7 +3,7 @@
         <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
                 <h1 class="text-3xl font-extrabold tracking-tight text-slate-950">Payments</h1>
-                <p class="mt-2 text-sm text-slate-600">Stripe payment records are persisted and visible here for audit and support work.</p>
+                <p class="mt-2 text-sm text-slate-600">Payment records across enabled gateways are persisted and visible here for audit and support work.</p>
             </div>
             <a href="{{ route('admin.payment-links.index') }}" class="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-600">Payment links</a>
         </div>
