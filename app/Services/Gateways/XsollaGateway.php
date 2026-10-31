@@ -84,30 +84,39 @@ class XsollaGateway implements PaymentGatewayContract
         $userId = $order->user_id ? (string) $order->user_id : (string) $order->guest_token;
         $returnUrl = route('checkout.success', [$order, $order->guest_token]).'?provider=xsolla';
 
+        $user = [
+            'id' => [
+                'value' => $userId,
+            ],
+        ];
+
+        if (filled($order->customer_email)) {
+            $user['email'] = [
+                'value' => (string) $order->customer_email,
+            ];
+        }
+
+        if (filled($order->customer_name)) {
+            $user['name'] = (string) $order->customer_name;
+        }
+
+        $settings = [
+            'project_id' => (int) $this->projectId(),
+            'currency' => strtoupper($order->currency ?: 'USD'),
+            'return_url' => $returnUrl,
+        ];
+
+        if ($this->isSandbox()) {
+            $settings['mode'] = 'sandbox';
+        }
+
         $payload = [
-            'user' => [
-                'id' => [
-                    'value' => $userId,
-                ],
-                'email' => [
-                    'value' => $order->customer_email,
-                ],
-                'name' => [
-                    'value' => $order->customer_name,
-                ],
-            ],
-            'settings' => [
-                'project_id' => (int) $this->projectId(),
-                'currency' => strtoupper($order->currency ?: 'USD'),
-                'return_url' => $returnUrl,
-            ],
+            'user' => $user,
+            'settings' => $settings,
             'purchase' => [
                 'checkout' => [
                     'currency' => strtoupper($order->currency ?: 'USD'),
                     'amount' => (float) $order->total,
-                ],
-                'description' => [
-                    'value' => $lineItemName,
                 ],
             ],
             'custom_parameters' => [
@@ -115,10 +124,6 @@ class XsollaGateway implements PaymentGatewayContract
                 'payment_id' => (string) $payment->id,
             ],
         ];
-
-        if ($this->isSandbox()) {
-            $payload['settings']['mode'] = 'sandbox';
-        }
 
         $endpoint = "https://api.xsolla.com/merchant/v2/merchants/{$this->merchantId()}/token";
 
