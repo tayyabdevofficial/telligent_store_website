@@ -1,3 +1,5 @@
+import '../../vendor/livewire/flux/dist/flux-lite.min.js';
+
 document.querySelectorAll('[data-mobile-nav]').forEach((navRoot) => {
     const toggle = navRoot.querySelector('[data-mobile-nav-toggle]');
     const menu = navRoot.querySelector('[data-mobile-nav-menu]');
