@@ -91,9 +91,11 @@ new #[Title('Security settings')] class extends Component {
     <flux:heading class="sr-only">{{ __('Security settings') }}</flux:heading>
 
     <x-pages::settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
-        <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
+        <form method="POST" action="{{ route('security.update') }}" wire:submit="updatePassword" class="mt-6 space-y-6">
+            @csrf
             <flux:input
                 wire:model="current_password"
+                name="current_password"
                 :label="__('Current password')"
                 type="password"
                 required
@@ -102,6 +104,7 @@ new #[Title('Security settings')] class extends Component {
             />
             <flux:input
                 wire:model="password"
+                name="password"
                 :label="__('New password')"
                 type="password"
                 required
@@ -110,6 +113,7 @@ new #[Title('Security settings')] class extends Component {
             />
             <flux:input
                 wire:model="password_confirmation"
+                name="password_confirmation"
                 :label="__('Confirm password')"
                 type="password"
                 required
@@ -123,6 +127,10 @@ new #[Title('Security settings')] class extends Component {
                         {{ __('Save') }}
                     </flux:button>
                 </div>
+
+                @if (session('status') === 'password-updated')
+                    <p class="text-sm font-medium text-emerald-600">{{ __('Saved.') }}</p>
+                @endif
 
                 <x-action-message class="me-3" on="password-updated">
                     {{ __('Saved.') }}

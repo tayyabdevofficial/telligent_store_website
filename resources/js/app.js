@@ -124,3 +124,15 @@ document.querySelectorAll('[data-dashboard-recent-orders]').forEach((container) 
 
     window.setInterval(refreshRecentOrders, interval);
 });
+
+// Password viewable toggle fallback
+document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('[data-flux-input-viewable], button[aria-label*="password" i], button[title*="password" i]');
+    if (!toggleBtn) return;
+
+    const inputWrapper = toggleBtn.closest('[data-flux-input], .flux-input') || toggleBtn.parentElement;
+    const input = inputWrapper ? inputWrapper.querySelector('input') : null;
+    if (input && (input.type === 'password' || input.type === 'text')) {
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+});
